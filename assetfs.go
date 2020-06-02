@@ -139,6 +139,8 @@ type AssetFS struct {
 	Prefix string
 	// Fallback file that is served if no other is found
 	Fallback string
+	// ReplacerMap contents strings replacer map key is target filename extension
+	ReplacerMap map[string]*strings.Replacer
 }
 
 func (fs *AssetFS) Open(name string) (http.File, error) {
@@ -151,6 +153,11 @@ func (fs *AssetFS) Open(name string) (http.File, error) {
 		if fs.AssetInfo != nil {
 			if info, err := fs.AssetInfo(name); err == nil {
 				timestamp = info.ModTime()
+			}
+		}
+		for ext, replacer := range fs.ReplacerMap {
+			if strings.Contains(name, ext) {
+				b = []byte(replacer.Replace(string(b)))
 			}
 		}
 		return NewAssetFile(name, b, timestamp), nil
